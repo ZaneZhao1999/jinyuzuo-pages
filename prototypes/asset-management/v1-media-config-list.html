@@ -67,6 +67,11 @@
     const { Header, Sider, Content } = Layout;
 
     // ========== 平台导航配置 ==========
+    // 导航路由映射（已有原型的模块配置路径，其他模块暂不跳转）
+    const navRoutes = {
+      asset: '../asset-management/v1-media-config-list.html',
+      attribution: '../attribution-config/v1-app-management.html',
+    };
     const topMenuItems = [
       { key: 'home', label: '首页' },
       { key: 'promotion', label: '推广管理' },
@@ -76,7 +81,27 @@
       { key: 'live', label: '直播运营' },
       { key: 'admin', label: '管理中心' },
       { key: 'newproject', label: '新项目' },
+      { key: 'attribution', label: '归因配置' },
     ];
+    const showToast = (msg) => {
+      const existing = document.getElementById('proto-toast');
+      if (existing) existing.remove();
+      const el = document.createElement('div');
+      el.id = 'proto-toast';
+      el.textContent = msg;
+      Object.assign(el.style, {
+        position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+        background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '8px 20px',
+        borderRadius: '6px', fontSize: '14px', zIndex: 9999,
+        transition: 'opacity 0.3s', opacity: '1', whiteSpace: 'nowrap',
+      });
+      document.body.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
+    };
+    const handleNavClick = ({ key }) => {
+      if (navRoutes[key]) window.location.href = navRoutes[key];
+      else showToast('页面设计中，暂时无法跳转哦~');
+    };
 
     const siderMenuItems = [
       {
@@ -127,6 +152,7 @@
               </div>
               <Menu mode="horizontal" selectedKeys={['asset']}
                 items={topMenuItems}
+                onClick={handleNavClick}
                 style={{ flex: 1, minWidth: 0, background: 'transparent', height: 48, lineHeight: '48px', borderBottom: 'none' }}
               />
               <div className="header-right">
