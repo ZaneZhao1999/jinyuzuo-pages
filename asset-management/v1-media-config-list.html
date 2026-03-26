@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鲸鱼座 - 媒体配置</title>
+  <!-- 1. React -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- 2. dayjs -->
+  <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/customParseFormat.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekday.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/localeData.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekOfYear.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekYear.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/advancedFormat.js"></script>
+  <script>
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    dayjs.extend(dayjs_plugin_weekday);
+    dayjs.extend(dayjs_plugin_localeData);
+    dayjs.extend(dayjs_plugin_weekOfYear);
+    dayjs.extend(dayjs_plugin_weekYear);
+    dayjs.extend(dayjs_plugin_advancedFormat);
+  </script>
+  <!-- 3. Ant Design -->
+  <link href="https://unpkg.com/antd@5/dist/reset.css" rel="stylesheet">
+  <script src="https://unpkg.com/antd@5/dist/antd.min.js"></script>
+  <!-- 4. Ant Design Icons -->
+  <script src="https://unpkg.com/@ant-design/icons@5/dist/index.umd.min.js"></script>
+  <!-- 5. Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+    .header-logo {
+      float: left; height: 48px; display: flex; align-items: center; margin-right: 24px;
+    }
+    .header-logo span { color: #1677ff; font-size: 16px; font-weight: 600; margin-left: 8px; }
+    .header-right {
+      float: right; height: 48px; display: flex; align-items: center;
+      color: rgba(0,0,0,0.45); gap: 16px;
+    }
+    .header-right .env-block {
+      display: flex; flex-direction: column; align-items: center; line-height: 1.4;
+      border: 1px solid #d9d9d9; border-radius: 4px; padding: 3px 10px;
+    }
+    .header-right .env-name {
+      font-size: 13px; color: rgba(0,0,0,0.75); font-weight: 500;
+    }
+    .header-right .env-version {
+      font-size: 11px; color: rgba(0,0,0,0.35);
+    }
+    .header-right .user-name { color: rgba(0,0,0,0.88); font-size: 14px; }
+    .content-card { background: #fff; padding: 24px; border-radius: 6px; }
+    .filter-section { margin-bottom: 16px; }
+    .action-section { margin-bottom: 16px; display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const {
+      Layout, Menu, ConfigProvider, Table, Button, Input, Select, DatePicker,
+      Space, Tag, Row, Col, Switch, Divider
+    } = antd;
+    const { Header, Sider, Content } = Layout;
+
+    // ========== 平台导航配置 ==========
+    const topMenuItems = [
+      { key: 'home', label: '首页' },
+      { key: 'promotion', label: '推广管理' },
+      { key: 'reports', label: '数据报表' },
+      { key: 'material', label: '素材管理' },
+      { key: 'asset', label: '资产管理' },
+      { key: 'live', label: '直播运营' },
+      { key: 'admin', label: '管理中心' },
+      { key: 'newproject', label: '新项目' },
+    ];
+
+    const siderMenuItems = [
+      {
+        key: 'accounts',
+        label: '投放账户',
+        icon: React.createElement(icons.TeamOutlined),
+      },
+      {
+        key: 'config',
+        label: '配置管理',
+        icon: React.createElement(icons.SettingOutlined),
+        children: [
+          { key: 'media-config', label: '媒体配置', icon: React.createElement(icons.GlobalOutlined) },
+          { key: 'tag-config', label: '标识配置', icon: React.createElement(icons.TagOutlined) },
+          { key: 'main-channel', label: '主渠道管理', icon: React.createElement(icons.ApartmentOutlined) },
+          { key: 'sub-channel', label: '子渠道', icon: React.createElement(icons.BranchesOutlined) },
+          { key: 'recharge-channel', label: '充值渠道', icon: React.createElement(icons.WalletOutlined) },
+        ],
+      },
+    ];
+
+    // ========== 基础布局组件 ==========
+    function PlatformLayout({ children }) {
+      const [collapsed, setCollapsed] = React.useState(false);
+
+      return (
+        <ConfigProvider theme={{ token: { colorPrimary: '#1677ff', borderRadius: 6 } }}>
+          <Layout style={{ minHeight: '100vh' }}>
+            <Header style={{
+              background: '#fff', padding: '0 24px',
+              display: 'flex', alignItems: 'center', height: 48, lineHeight: '48px',
+              borderBottom: '1px solid #f0f0f0',
+            }}>
+              <div className="header-logo">
+                <svg width="28" height="28" viewBox="0 0 100 100" style={{ marginRight: 4 }}>
+                  <defs>
+                    <linearGradient id="whaleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#36b3ff', stopOpacity: 1 }} />
+                      <stop offset="100%" style={{ stopColor: '#1677ff', stopOpacity: 1 }} />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="50" cy="50" r="45" fill="url(#whaleGrad)" />
+                  <path d="M30 55 Q35 35, 55 30 Q70 28, 75 40 Q78 50, 70 58 Q60 65, 45 62 Q35 60, 30 55Z" fill="white" opacity="0.9"/>
+                  <path d="M55 30 Q48 25, 40 28 Q35 30, 38 38" fill="none" stroke="white" strokeWidth="3" opacity="0.7"/>
+                  <circle cx="60" cy="45" r="3" fill="url(#whaleGrad)" />
+                </svg>
+                <span>鲸鱼座</span>
+              </div>
+              <Menu mode="horizontal" selectedKeys={['asset']}
+                items={topMenuItems}
+                style={{ flex: 1, minWidth: 0, background: 'transparent', height: 48, lineHeight: '48px', borderBottom: 'none' }}
+              />
+              <div className="header-right">
+                <div className="env-block">
+                  <span className="env-name">产品原型</span>
+                  <span className="env-version">main · 0.0.8-4fda05a1</span>
+                </div>
+                <span className="user-name">路遥</span>
+              </div>
+            </Header>
+            <Layout>
+              <Sider width={180} collapsedWidth={56} collapsible collapsed={collapsed}
+                onCollapse={setCollapsed} theme="light" style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
+                <Menu theme="light" mode="inline"
+                  selectedKeys={['media-config']}
+                  defaultOpenKeys={['config']}
+                  items={siderMenuItems}
+                  style={{ borderRight: 0 }}
+                />
+              </Sider>
+              <Content style={{ padding: 24, background: '#f5f5f5', minHeight: 'calc(100vh - 48px)' }}>
+                {children}
+              </Content>
+            </Layout>
+          </Layout>
+        </ConfigProvider>
+      );
+    }
+
+    // ========== 媒体配置列表页 ==========
+
+    // Mock 数据 - 媒体列表
+    const mediaData = [
+      { key: -1, type: -1, name: '其它', mediaKey: 'other', status: true, monitor: false },
+      { key: 0, type: 0, name: '腾讯', mediaKey: 'tencent', status: true, monitor: true },
+      { key: 1, type: 1, name: '头条', mediaKey: 'toutiao', status: true, monitor: true },
+      { key: 2, type: 2, name: '快手', mediaKey: 'kuaishou', status: true, monitor: true },
+      { key: 3, type: 3, name: '百度', mediaKey: 'baidu', status: true, monitor: true },
+      { key: 4, type: 4, name: 'UC', mediaKey: 'uc', status: true, monitor: true },
+      { key: 5, type: 5, name: 'OPPO', mediaKey: 'oppo', status: true, monitor: false },
+      { key: 6, type: 6, name: 'VIVO', mediaKey: 'vivo', status: true, monitor: false },
+      { key: 7, type: 7, name: '搜狗', mediaKey: 'sougou', status: true, monitor: true },
+      { key: 8, type: 8, name: '神马', mediaKey: 'shenma', status: false, monitor: false },
+      { key: 9, type: 9, name: '360', mediaKey: '360', status: true, monitor: true },
+      { key: 10, type: 10, name: '联运', mediaKey: 'lianyun', status: true, monitor: false },
+      { key: 11, type: 11, name: '三水', mediaKey: 'sanshui', status: false, monitor: false },
+      { key: 12, type: 12, name: '华为', mediaKey: 'huaweiads', status: true, monitor: false },
+      { key: 13, type: 13, name: '微博', mediaKey: 'weibo', status: true, monitor: true },
+      { key: 14, type: 14, name: '爱奇艺', mediaKey: 'aiqiyi', status: true, monitor: true },
+    ];
+
+    // 表格列定义
+    const columns = [
+      {
+        title: 'Type',
+        dataIndex: 'type',
+        key: 'type',
+        width: 80,
+      },
+      {
+        title: '名称',
+        dataIndex: 'name',
+        key: 'name',
+        width: 150,
+      },
+      {
+        title: 'Key',
+        dataIndex: 'mediaKey',
+        key: 'mediaKey',
+        width: 150,
+      },
+      {
+        title: '状态',
+        dataIndex: 'status',
+        key: 'status',
+        width: 120,
+        render: (status) => (
+          status
+            ? <Tag color="blue">启用</Tag>
+            : <Tag color="orange">未启用</Tag>
+        ),
+      },
+      {
+        title: '监测地址',
+        dataIndex: 'monitor',
+        key: 'monitor',
+        width: 120,
+        render: (monitor) => (
+          monitor
+            ? <Tag color="green">开启</Tag>
+            : <Tag color="red">关闭</Tag>
+        ),
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 250,
+        render: (_, record) => (
+          <Space>
+            <a>修改</a>
+            <a style={{ color: '#ff4d4f' }}>删除</a>
+            <a>监测URL配置</a>
+          </Space>
+        ),
+      },
+    ];
+
+    function PageContent() {
+      return (
+        <div className="content-card">
+          {/* 筛选区域 */}
+          <div className="filter-section">
+            <Row gutter={[16, 16]} align="middle">
+              <Col>
+                <Space>
+                  <span style={{ color: 'rgba(0,0,0,0.65)', fontSize: 14 }}>游戏</span>
+                  <Select
+                    defaultValue="daka"
+                    style={{ width: 160 }}
+                    options={[
+                      { value: 'daka', label: '大咖' },
+                      { value: 'yule', label: '鱼乐' },
+                      { value: 'lele', label: '乐乐' },
+                    ]}
+                  />
+                </Space>
+              </Col>
+              <Col>
+                <Space>
+                  <span style={{ color: 'rgba(0,0,0,0.65)', fontSize: 14 }}>媒体名称</span>
+                  <Input placeholder="请输入媒体名称" style={{ width: 200 }} />
+                </Space>
+              </Col>
+              <Col>
+                <Button>重置</Button>
+              </Col>
+            </Row>
+          </div>
+
+          {/* 新增按钮 */}
+          <div className="action-section">
+            <Button type="primary">新增</Button>
+          </div>
+
+          {/* 数据表格 */}
+          <Table
+            columns={columns}
+            dataSource={mediaData}
+            pagination={false}
+            size="middle"
+            bordered={false}
+          />
+        </div>
+      );
+    }
+
+    // ========== 渲染入口 ==========
+    function App() {
+      return (
+        <PlatformLayout>
+          <PageContent />
+        </PlatformLayout>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
