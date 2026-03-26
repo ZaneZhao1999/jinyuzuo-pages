@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鲸鱼座 - 原型画廊</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+      background: #f5f5f5;
+      color: rgba(0, 0, 0, 0.88);
+    }
+    .header {
+      background: #001529;
+      padding: 0 48px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1677ff;
+    }
+    .header .title {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .header .subtitle {
+      color: rgba(255,255,255,0.65);
+      font-size: 14px;
+      margin-left: auto;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .icon {
+      width: 4px;
+      height: 20px;
+      background: #1677ff;
+      border-radius: 2px;
+    }
+    .module-section {
+      margin-bottom: 32px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #f0f0f0;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      border-color: #1677ff;
+      box-shadow: 0 4px 12px rgba(22, 119, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    .card .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .card .card-desc {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .card .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card .card-version {
+      background: #e6f4ff;
+      color: #1677ff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .card .card-date {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 12px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: rgba(0, 0, 0, 0.25);
+    }
+    .empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .stats-bar {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 48px;
+      border: 1px solid #f0f0f0;
+    }
+    .stat-item .stat-label {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 13px;
+    }
+    .stat-item .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1677ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">🐋</span>
+    <span class="title">鲸鱼座 · 原型画廊</span>
+    <span class="subtitle">PM Design Agent 产出的所有原型文件</span>
+  </div>
+
+  <div class="container">
+    <!-- 统计信息 -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-label">总原型数</div>
+        <div class="stat-value" id="total-count">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">涵盖模块</div>
+        <div class="stat-value" id="module-count">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">最近更新</div>
+        <div class="stat-value" id="last-update" style="font-size: 16px;">-</div>
+      </div>
+    </div>
+
+    <!-- 模块列表 - 由 agent 在生成原型时自动更新 -->
+    <div id="prototype-list">
+      <div class="empty-state" style="display: none;">
+        <div class="empty-icon">📦</div>
+        <p>还没有生成任何原型</p>
+        <p style="margin-top: 8px; font-size: 13px;">在 Claude Code 中输入「帮我设计一个 XX 页面」开始生成</p>
+      </div>
+
+      <div class="module-section" data-module="asset-management">
+        <div class="section-title"><div class="icon"></div>资产管理</div>
+        <div class="card-grid">
+          <a class="card" href="asset-management/v1-media-config-list.html">
+            <div class="card-title">媒体配置列表</div>
+            <div class="card-desc">资产管理 > 配置管理 > 媒体配置的列表页原型，包含游戏筛选、媒体名称搜索、状态/监测地址标签、操作列</div>
+            <div class="card-meta">
+              <span class="card-version">v1</span>
+              <span class="card-date">2026-03-26</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="module-section" data-module="attribution-config">
+        <div class="section-title"><div class="icon"></div>归因配置</div>
+        <div class="card-grid">
+          <a class="card" href="attribution-config/v1-app-management.html">
+            <div class="card-title">应用管理</div>
+            <div class="card-desc">归因配置 > 应用/回传管理 > 应用管理页原型。包含筛选区（游戏/平台/系统/搜索）、16列可拖拽宽度表格（左右固定列）、新增/编辑应用弹窗（含基础信息、点击匹配、归因染色、渠道回传四大分区表单）、分页</div>
+            <div class="card-meta">
+              <span class="card-version">v1</span>
+              <span class="card-date">2026-03-26</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      ========== 原型注册区域 ==========
+      Agent 生成新原型后，会在此处添加条目。格式：
+
+      <div class="module-section" data-module="asset-management">
+        <div class="section-title"><div class="icon"></div>资产管理</div>
+        <div class="card-grid">
+          <a class="card" href="asset-management/v1-media-config-list.html">
+            <div class="card-title">媒体配置列表</div>
+            <div class="card-desc">资产管理 > 配置管理 > 媒体配置的列表页原型</div>
+            <div class="card-meta">
+              <span class="card-version">v1</span>
+              <span class="card-date">2026-03-26</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    -->
+  </div>
+
+  <script>
+    // 密码墙
+    (function() {
+      const PASS = 'ykssjyz';
+      const KEY  = 'proto_auth';
+      if (sessionStorage.getItem(KEY) === '1') return;
+
+      // 遮罩
+      const overlay = document.createElement('div');
+      overlay.style.cssText = [
+        'position:fixed;inset:0;z-index:9999',
+        'background:rgba(0,0,0,0.55)',
+        'display:flex;align-items:center;justify-content:center',
+      ].join(';');
+
+      const box = document.createElement('div');
+      box.style.cssText = [
+        'background:#fff;border-radius:12px',
+        'padding:40px 48px;width:360px',
+        'box-shadow:0 20px 60px rgba(0,0,0,0.25)',
+        'display:flex;flex-direction:column;align-items:center;gap:20px',
+      ].join(';');
+
+      box.innerHTML = `
+        <div style="font-size:32px">🐋</div>
+        <div style="font-size:18px;font-weight:600;color:#1d2129">鲸鱼座 · 原型画廊</div>
+        <div style="font-size:13px;color:#86909c">请输入访问密码</div>
+        <input id="pw-input" type="password" placeholder="密码"
+          style="width:100%;height:40px;border:1px solid #e5e6eb;border-radius:6px;
+                 padding:0 14px;font-size:14px;outline:none;text-align:center;
+                 letter-spacing:4px;color:#1d2129" />
+        <div id="pw-err" style="font-size:12px;color:#ff4d4f;min-height:16px"></div>
+        <button id="pw-btn"
+          style="width:100%;height:40px;background:#1677ff;color:#fff;border:none;
+                 border-radius:6px;font-size:14px;cursor:pointer;font-weight:500">
+          进入
+        </button>`;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      const input = document.getElementById('pw-input');
+      const btn   = document.getElementById('pw-btn');
+      const err   = document.getElementById('pw-err');
+
+      function tryEnter() {
+        if (input.value === PASS) {
+          sessionStorage.setItem(KEY, '1');
+          overlay.remove();
+        } else {
+          err.textContent = '密码错误，请重试';
+          input.value = '';
+          input.style.borderColor = '#ff4d4f';
+          setTimeout(() => { input.style.borderColor = '#e5e6eb'; err.textContent = ''; }, 2000);
+        }
+      }
+      btn.addEventListener('click', tryEnter);
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') tryEnter(); });
+      setTimeout(() => input.focus(), 100);
+    })();
+
+    // 自动统计原型数量
+    document.addEventListener('DOMContentLoaded', function() {
+      const cards = document.querySelectorAll('.card');
+      const modules = document.querySelectorAll('.module-section');
+      document.getElementById('total-count').textContent = cards.length;
+      document.getElementById('module-count').textContent = modules.length;
+
+      const dates = Array.from(document.querySelectorAll('.card-date')).map(el => el.textContent);
+      if (dates.length > 0) {
+        document.getElementById('last-update').textContent = dates[dates.length - 1];
+        // 有原型时隐藏空状态
+        const emptyState = document.querySelector('.empty-state');
+        if (emptyState) emptyState.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
+<!-- deployed -->
+Thu Mar 26 17:41:34     2026
+<!-- v2 -->
