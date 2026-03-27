@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鲸鱼座 - 归因配置 - 应用管理</title>
+  <!-- 1. React -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- 2. dayjs -->
+  <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/customParseFormat.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekday.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/localeData.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekOfYear.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/weekYear.js"></script>
+  <script src="https://unpkg.com/dayjs/plugin/advancedFormat.js"></script>
+  <script>
+    dayjs.extend(dayjs_plugin_customParseFormat);
+    dayjs.extend(dayjs_plugin_weekday);
+    dayjs.extend(dayjs_plugin_localeData);
+    dayjs.extend(dayjs_plugin_weekOfYear);
+    dayjs.extend(dayjs_plugin_weekYear);
+    dayjs.extend(dayjs_plugin_advancedFormat);
+  </script>
+  <!-- 3. Ant Design -->
+  <link href="https://unpkg.com/antd@5/dist/reset.css" rel="stylesheet">
+  <script src="https://unpkg.com/antd@5/dist/antd.min.js"></script>
+  <!-- 4. Ant Design Icons -->
+  <script src="https://unpkg.com/@ant-design/icons@5/dist/index.umd.min.js"></script>
+  <!-- 5. Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+    .header-logo {
+      float: left; height: 48px; display: flex; align-items: center; margin-right: 24px;
+    }
+    .header-logo span { color: #1677ff; font-size: 16px; font-weight: 600; margin-left: 8px; }
+    .header-right {
+      float: right; height: 48px; display: flex; align-items: center;
+      color: rgba(0,0,0,0.45); gap: 16px;
+    }
+    .header-right .env-block {
+      display: flex; flex-direction: column; align-items: center; line-height: 1.4;
+      border: 1px solid #d9d9d9; border-radius: 4px; padding: 3px 10px;
+    }
+    .header-right .env-name { font-size: 13px; color: rgba(0,0,0,0.75); font-weight: 500; }
+    .header-right .env-version { font-size: 11px; color: rgba(0,0,0,0.35); }
+    .header-right .user-name { color: rgba(0,0,0,0.88); font-size: 14px; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+    }
+    .modal-container {
+      display: flex; flex-direction: column;
+      width: 82vw; max-width: 980px; height: 85vh;
+      background: #fff; border-radius: 10px; overflow: hidden;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.15);
+    }
+
+    /* Section header blue bar */
+    .section-bar {
+      display: inline-block; width: 3px; height: 14px;
+      background: #1677ff; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* Dimension tag */
+    .dim-tag {
+      display: inline-block; font-size: 12px; color: #1677ff;
+      background: #e6f4ff; border: 1px solid #91caff;
+      border-radius: 3px; padding: 3px 10px; white-space: nowrap;
+      min-width: 80px; text-align: center;
+    }
+
+    /* Channel card */
+    .channel-card { border: 1px solid #e4e7ed; border-radius: 6px; overflow: hidden; }
+    .channel-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; height: 38px; background: #f0f2f5;
+      border-bottom: 1px solid #e4e7ed;
+    }
+
+    /* === 数据行：奇白偶灰 === */
+    .row-white > td { background: #ffffff !important; }
+    .row-stripe > td { background: #f5f7fa !important; }
+    .ant-table-tbody > tr.row-white:hover > td { background: #ffffff !important; }
+    .ant-table-tbody > tr.row-stripe:hover > td { background: #f5f7fa !important; }
+
+    /* === 展开行：跟随父行同色，无上边线 === */
+    .ant-table-tbody > tr.ant-table-expanded-row.row-white > td {
+      padding: 0 !important;
+      background: #ffffff !important;
+      border-top: none !important;
+    }
+    .ant-table-tbody > tr.ant-table-expanded-row.row-stripe > td {
+      padding: 0 !important;
+      background: #f5f7fa !important;
+      border-top: none !important;
+    }
+    .ant-table-tbody > tr.ant-table-expanded-row.row-white:hover > td {
+      background: #ffffff !important;
+    }
+    .ant-table-tbody > tr.ant-table-expanded-row.row-stripe:hover > td {
+      background: #f5f7fa !important;
+    }
+    /* 父行展开时底部改为虚线 */
+    .ant-table-tbody > tr.row-white.ant-table-row-expanded > td,
+    .ant-table-tbody > tr.row-stripe.ant-table-row-expanded > td {
+      border-bottom: 1px dashed #e0e0e0 !important;
+    }
+
+    /* === 展开区布局：三栏，竖虚线分隔 === */
+    .expand-detail {
+      display: grid; grid-template-columns: 20% 40% 40%;
+      padding: 0; background: transparent;
+    }
+    .expand-col {
+      padding: 14px 20px 16px;
+      border-right: 1px dashed #e5e5e5;
+    }
+    .expand-col:first-child { padding-left: 24px; }
+    .expand-col:last-child { border-right: none; }
+
+    /* 栏标题 */
+    .expand-col-title {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600; color: rgba(0,0,0,0.88);
+      margin-bottom: 12px;
+    }
+    .expand-col-title::before {
+      content: ''; display: inline-block; width: 3px; height: 13px;
+      background: #1677ff; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* 信息条目 */
+    .info-item { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #e5e5e5; }
+    .info-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .info-label { font-size: 12px; color: rgba(0,0,0,0.45); margin-bottom: 3px; }
+    .info-value { font-size: 13px; color: rgba(0,0,0,0.88); line-height: 1.5; word-break: break-all; }
+
+    /* 渠道条目（栏3） */
+    .expand-ch-item {
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px dashed #e5e5e5;
+    }
+    .expand-ch-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .expand-ch-name { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.88); margin-bottom: 5px; }
+    .expand-ch-meta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: rgba(0,0,0,0.65); }
+    .expand-ch-meta .lbl { color: rgba(0,0,0,0.45); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const {
+  Layout, Menu, Button, Select, Input, Table, Tag, Space, Modal, Form,
+  Row, Col, ConfigProvider, Pagination, Drawer, Steps, Divider, Checkbox, Radio, Tooltip
+} = antd;
+const { Header, Sider, Content } = Layout;
+const {
+  SearchOutlined, ReloadOutlined, PlusOutlined, EditOutlined, DeleteOutlined,
+  CloseOutlined, CheckOutlined, AppstoreOutlined, BranchesOutlined,
+  InboxOutlined, MonitorOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+  RightOutlined, DownOutlined
+} = icons;
+
+// ===================== Navigation Config =====================
+const navRoutes = {
+  asset: '../asset-management/v1-media-config-list.html',
+  attribution: '../attribution-config/v2-app-management.html',
+};
+const topMenuItems = [
+  { key: 'home', label: '首页' },
+  { key: 'promotion', label: '推广管理' },
+  { key: 'report', label: '数据报表' },
+  { key: 'material', label: '素材管理' },
+  { key: 'asset', label: '资产管理' },
+  { key: 'live', label: '直播运营' },
+  { key: 'admin', label: '管理中心' },
+  { key: 'newproject', label: '新项目' },
+  { key: 'attribution', label: '归因配置' },
+];
+const showToast = (msg) => {
+  const existing = document.getElementById('proto-toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'proto-toast';
+  el.textContent = msg;
+  Object.assign(el.style, {
+    position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+    background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '8px 20px',
+    borderRadius: '6px', fontSize: '14px', zIndex: 9999,
+    transition: 'opacity 0.3s', opacity: '1', whiteSpace: 'nowrap',
+  });
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
+};
+const handleNavClick = ({ key }) => {
+  if (navRoutes[key]) window.location.href = navRoutes[key];
+  else showToast('页面设计中，暂时无法跳转哦~');
+};
+
+const siderMenuItems = [
+  { key: 'app-management', icon: React.createElement(AppstoreOutlined), label: '应用/回传管理' },
+  { key: 'channel-management', icon: React.createElement(BranchesOutlined), label: '渠道管理' },
+  { key: 'pkg-management', icon: React.createElement(InboxOutlined), label: 'pkg管理' },
+  { key: 'monitor-management', icon: React.createElement(MonitorOutlined), label: '监测管理' },
+];
+
+// ===================== Constants =====================
+const GAME_OPTIONS = [
+  { value: '捕鱼大咖', label: '捕鱼大咖' },
+  { value: '其他游戏', label: '其他游戏' },
+];
+const PLATFORM_OPTIONS = [
+  { value: 'APP', label: 'APP' },
+  { value: '微信小游戏', label: '微信小游戏' },
+];
+const SYSTEM_OPTIONS_APP = ['安卓', 'iOS', '鸿蒙'];
+const SYSTEM_OPTIONS_WECHAT = ['/'];
+const ALL_SYSTEM_OPTIONS = ['安卓', 'iOS', '鸿蒙', '/'];
+const PUBLISH_SDK_OPTIONS = ['安卓官方', '华为', 'OPPO', 'iOS', '鸿蒙', '官方'];
+const SUBPACKAGE_OPTIONS = ['腾讯分包', '游酷分包', '快手分包', '不支持分包'];
+// 归因维度预设选项（Radio 按钮组）
+const DIMENSION_PRESETS = [
+  { label: '发行sdk、subappid、pkg', value: 'full', dims: ['发行sdk', 'subappid', 'pkg'] },
+  { label: 'subappid', value: 'subappid', dims: ['subappid'] },
+  { label: '无', value: 'none', dims: ['无'] },
+  { label: '自定义', value: 'custom', dims: [] },
+];
+const DIMENSION_CUSTOM_OPTIONS = ['发行sdk', 'subappid', 'pkg'];
+
+function getDimensionPreset(dims) {
+  if (!dims || dims.length === 0) return 'custom';
+  if (dims.includes('无')) return 'none';
+  if (dims.length === 3 && dims.includes('发行sdk') && dims.includes('subappid') && dims.includes('pkg')) return 'full';
+  if (dims.length === 1 && dims[0] === 'subappid') return 'subappid';
+  return 'custom';
+}
+
+const ACTIVATION_ATTRIBUTION_OPTIONS = [
+  '安卓通用点击归因', '华为智能分包归因', 'OPPO-ssoid 染色归因',
+  'iOS 通用归因', '鸿蒙通用归因', '小游戏通用归因', '无需广告归因',
+];
+const LAUNCH_ATTRIBUTION_OPTIONS = [
+  '安卓通用点击归因', '不支持启动归因', 'iOS 通用归因', '鸿蒙通用归因', '小游戏通用归因', '无需广告归因',
+];
+const CALLBACK_SCRIPT_OPTIONS = ['腾讯API', '快手API', '华为ads-API', '华为商店API'];
+const COLORING_METHOD_OPTIONS = [
+  'pkg-48h-last激活归因',
+  'subappid-48h-last激活归因',
+  'pkg-48h-last激活归因 > pkg-48h-last启动归因 > subappid-48h-last启动归因',
+  'subappid-48h-last激活归因 > subappid-48h-last启动归因',
+  'pkg-48h-last激活(预约)归因 > pkg-48h-last激活归因',
+  'subappid-48h-last激活(预约)归因 > subappid-48h-last激活归因',
+  '无需广告归因染色',
+];
+const COLORING_DIMENSIONS = ['设备不去重', '发行uid7'];
+const MAIN_CHANNEL_OPTIONS = [
+  '广点通朋友圈', '广点通公众号', '官方', '华为联运', '华为信息流', '华为商店', 'OPPO 联运', '苹果商店', '鸿蒙联运', '微信小游戏自然量',
+  '快手信息流1', '快手直播间1',
+];
+const CALLBACK_METHOD_OPTIONS = ['SDK回传', 'API回传'];
+const CALLBACK_MODEL_OPTIONS = ['设备不去重新增口径', '发行uid_7新增口径'];
+const ACTIVATION_TIMING = {
+  'API回传': ['设备激活', '口径新增', '无'],
+  'SDK回传': ['sdk回传'],
+};
+const REGISTRATION_TIMING = {
+  'API回传': ['口径新增', '无'],
+  'SDK回传': ['sdk回传'],
+};
+const PAYMENT_TIMING = {
+  'API回传': ['口径新增7日账面付费', '口径新增7日分成后付费', '口径新增30日账面付费', '口径新增30日分成后付费'],
+  'SDK回传': ['sdk回传', '口径新增7日扣量sdk回传'],
+};
+const CHANNEL_CODE_MAP = {
+  '广点通朋友圈': 'gdtpyq', '广点通公众号': 'gdtgzh',
+  '官方': 'official', '华为联运': 'hwly',
+  'OPPO 联运': 'oppoly', '苹果商店': 'appstore', '鸿蒙联运': 'hmly',
+  '微信小游戏自然量': 'wxxyx', '快手信息流1': 'ksxxl1', '快手直播间1': 'kszbj1',
+  '华为信息流': 'hwxxl', '华为商店': 'hwsd',
+};
+
+function buildPkgDefault(appId, channel) {
+  const code = CHANNEL_CODE_MAP[channel];
+  return appId && code ? `${appId}_${code}_00_1` : '';
+}
+
+// ===================== Initial Data =====================
+const INITIAL_DATA = [
+  {
+    id: 1, appId: '10071028', appName: '大咖-腾讯', game: '捕鱼大咖', platform: 'APP', system: '安卓',
+    publishSdk: '安卓官方', subpackageMethod: '腾讯分包', packageName: 'com.youkuss.bydk',
+    attributionDimensions: ['发行sdk', 'subappid', 'pkg'],
+    activationAttribution: '安卓通用点击归因', launchAttribution: '安卓通用点击归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: 'pkg-48h-last激活归因' },
+      { dimension: '发行uid7', method: 'pkg-48h-last激活归因 > pkg-48h-last启动归因 > subappid-48h-last启动归因' },
+    ],
+    mainChannel: '广点通朋友圈', pkgDefault: '10071028_gdtpyq_00_1', callbackModel: '设备不去重新增口径',
+    noCallback: false, savedChannelConfigs: [],
+    channelConfigs: [
+      { id: 'cc_1', channel: '广点通朋友圈', code: 'gdtpyq', callbackMethod: 'SDK回传', callbackScript: '', callbackModel: '设备不去重新增口径', activationTiming: 'sdk回传', registrationTiming: 'sdk回传', paymentTiming: '口径新增7日扣量sdk回传' },
+      { id: 'cc_2', channel: '广点通公众号', code: 'gdtgzh', callbackMethod: 'SDK回传', callbackScript: '', callbackModel: '发行uid_7新增口径', activationTiming: 'sdk回传', registrationTiming: 'sdk回传', paymentTiming: '口径新增7日扣量sdk回传' },
+    ],
+  },
+  {
+    id: 2, appId: '10071027', appName: '大咖-官包', game: '捕鱼大咖', platform: 'APP', system: '安卓',
+    publishSdk: '安卓官方', subpackageMethod: '游酷分包', packageName: 'com.youkuss.bydk',
+    attributionDimensions: ['无'],
+    activationAttribution: '无需广告归因', launchAttribution: '无需广告归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: '无需广告归因染色' },
+      { dimension: '发行uid7', method: '无需广告归因染色' },
+    ],
+    mainChannel: '官方', pkgDefault: '10071027_official_00_1', callbackModel: '设备不去重新增口径',
+    noCallback: true, savedChannelConfigs: [], channelConfigs: [],
+  },
+  {
+    id: 3, appId: '10071003', appName: '大咖-华为', game: '捕鱼大咖', platform: 'APP', system: '安卓',
+    publishSdk: '华为', subpackageMethod: '不支持分包', packageName: 'com.ykss.bydk.huawei',
+    attributionDimensions: ['subappid'],
+    activationAttribution: '华为智能分包归因', launchAttribution: '不支持启动归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: 'subappid-48h-last激活归因' },
+      { dimension: '发行uid7', method: 'subappid-48h-last激活归因' },
+    ],
+    mainChannel: '华为联运', pkgDefault: '10071003_hwly_00_1', callbackModel: '设备不去重新增口径',
+    noCallback: false, savedChannelConfigs: [],
+    channelConfigs: [
+      { id: 'cc_3', channel: '华为信息流', code: 'hwxxl', callbackMethod: 'API回传', callbackScript: '华为ads-API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增30日分成后付费' },
+      { id: 'cc_hw2', channel: '华为商店', code: 'hwsd', callbackMethod: 'API回传', callbackScript: '华为商店API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增30日分成后付费' },
+    ],
+  },
+  {
+    id: 6, appId: '10071026', appName: '大咖-鸿蒙', game: '捕鱼大咖', platform: 'APP', system: '鸿蒙',
+    publishSdk: '鸿蒙', subpackageMethod: '不支持分包', packageName: 'com.huawei.harmony.bydk',
+    attributionDimensions: ['subappid'],
+    activationAttribution: '鸿蒙通用归因', launchAttribution: '鸿蒙通用归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: 'subappid-48h-last激活归因' },
+      { dimension: '发行uid7', method: 'subappid-48h-last激活归因 > subappid-48h-last启动归因' },
+    ],
+    mainChannel: '鸿蒙联运', pkgDefault: '10071026_hmly_00_1', callbackModel: '发行uid_7新增口径',
+    noCallback: false, savedChannelConfigs: [],
+    channelConfigs: [
+      { id: 'cc_hm1', channel: '广点通朋友圈', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_hm2', channel: '广点通公众号', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_hm3', channel: '快手信息流1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_hm4', channel: '快手直播间1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+    ],
+  },
+  {
+    id: 7, appId: '10071033', appName: '大咖-微信小游戏', game: '捕鱼大咖', platform: '微信小游戏', system: '/',
+    publishSdk: '官方', subpackageMethod: '不支持分包', packageName: 'com.wxxyx.bdk',
+    attributionDimensions: ['subappid'],
+    activationAttribution: '小游戏通用归因', launchAttribution: '小游戏通用归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: 'subappid-48h-last激活归因' },
+      { dimension: '发行uid7', method: 'subappid-48h-last激活归因 > subappid-48h-last启动归因' },
+    ],
+    mainChannel: '微信小游戏自然量', pkgDefault: '10071033_wxxyx_00_1', callbackModel: '发行uid_7新增口径',
+    noCallback: false, savedChannelConfigs: [],
+    channelConfigs: [
+      { id: 'cc_wx1', channel: '广点通朋友圈', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '口径新增', registrationTiming: '无', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_wx2', channel: '广点通公众号', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '口径新增', registrationTiming: '无', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_wx3', channel: '快手信息流1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '口径新增', registrationTiming: '无', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_wx4', channel: '快手直播间1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '无', paymentTiming: '口径新增7日分成后付费' },
+    ],
+  },
+  {
+    id: 200, appId: '10071000', appName: '大咖-ios', game: '捕鱼大咖', platform: 'APP', system: 'iOS',
+    publishSdk: 'iOS', subpackageMethod: '不支持分包', packageName: 'com.ykss.budkios',
+    attributionDimensions: ['subappid'],
+    activationAttribution: 'iOS 通用归因', launchAttribution: 'iOS 通用归因',
+    coloringMethods: [
+      { dimension: '设备不去重', method: 'subappid-48h-last激活归因' },
+      { dimension: '发行uid7', method: 'subappid-48h-last激活归因 > subappid-48h-last启动归因' },
+    ],
+    mainChannel: '苹果商店', pkgDefault: '10071000_appstore_00_1', callbackModel: '发行uid_7新增口径',
+    noCallback: false, savedChannelConfigs: [],
+    channelConfigs: [
+      { id: 'cc_ios1', channel: '广点通朋友圈', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_ios2', channel: '广点通公众号', callbackMethod: 'API回传', callbackScript: '腾讯API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_ios3', channel: '快手信息流1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+      { id: 'cc_ios4', channel: '快手直播间1', callbackMethod: 'API回传', callbackScript: '快手API', callbackModel: '设备不去重新增口径', activationTiming: '设备激活', registrationTiming: '口径新增', paymentTiming: '口径新增7日分成后付费' },
+    ],
+  },
+];
+
+const EMPTY_FORM = {
+  appId: '', appName: '', game: '', platform: '', system: '',
+  publishSdk: '', subpackageMethod: '', packageName: '',
+  attributionDimensions: ['发行sdk', 'subappid', 'pkg'], activationAttribution: '', launchAttribution: '',
+  coloringMethods: COLORING_DIMENSIONS.map(d => ({ dimension: d, method: '' })),
+  mainChannel: '', channelConfigs: [], pkgDefault: '', callbackModel: '设备不去重新增口径',
+  noCallback: false, savedChannelConfigs: [],
+};
+
+// ===================== Sub-components =====================
+function SectionHeader({ children, note }) {
+  return React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 } },
+    React.createElement('span', { className: 'section-bar' }),
+    React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.88)', fontWeight: 600 } }, children),
+    note && React.createElement('span', { style: { fontSize: 12, color: 'rgba(0,0,0,0.45)' } }, note)
+  );
+}
+
+function FieldLabel({ children, required }) {
+  return React.createElement('label', { style: { fontSize: 13, color: 'rgba(0,0,0,0.65)', marginBottom: 5, display: 'block' } },
+    required && React.createElement('span', { style: { color: '#ff4d4f', marginRight: 3 } }, '*'),
+    children
+  );
+}
+
+// ===================== Expand Row Detail =====================
+function ExpandRowDetail({ app }) {
+  const isNone = app.attributionDimensions && app.attributionDimensions.includes('无');
+  const coloringList = app.coloringMethods ? app.coloringMethods.filter(c => c.method && c.method !== '无需广告归因染色') : [];
+  const hasColoring = !isNone && coloringList.length > 0;
+  const hasChannels = !isNone && !app.noCallback && app.channelConfigs && app.channelConfigs.length > 0;
+
+  const tagStyle = { margin: 0, fontSize: 12, lineHeight: '20px', padding: '0 6px' };
+  const emptyTip = React.createElement('span', { style: { fontSize: 12, color: 'rgba(0,0,0,0.25)' } }, '未配置');
+  const noCallbackTip = React.createElement('span', { style: { fontSize: 12, color: 'rgba(0,0,0,0.45)' } }, '无需渠道回传');
+  const grayText = (text) => React.createElement('span', { style: { fontSize: 12, color: 'rgba(0,0,0,0.45)' } }, text);
+
+  return React.createElement('div', { className: 'expand-detail' },
+
+    // 栏1: 归因配置 (20%)
+    React.createElement('div', { className: 'expand-col' },
+      React.createElement('div', { className: 'expand-col-title' }, '归因配置'),
+      React.createElement('div', { className: 'info-item' },
+        React.createElement('div', { className: 'info-label' }, '归因维度'),
+        isNone
+          ? React.createElement('div', { className: 'info-value', style: { color: 'rgba(0,0,0,0.45)' } }, '无')
+          : React.createElement('div', { style: { display: 'flex', gap: 4, flexWrap: 'wrap' } },
+              (app.attributionDimensions || []).map((d, i) =>
+                React.createElement(Tag, { key: i, color: 'default', style: tagStyle }, d)
+              )
+            )
+      ),
+      React.createElement('div', { className: 'info-item' },
+        React.createElement('div', { className: 'info-label' }, '激活归因方式'),
+        React.createElement('div', { className: 'info-value' },
+          isNone ? grayText('无需广告归因') : (app.activationAttribution || '—')
+        )
+      ),
+      React.createElement('div', { className: 'info-item' },
+        React.createElement('div', { className: 'info-label' }, '启动归因方式'),
+        React.createElement('div', { className: 'info-value' },
+          isNone ? grayText('无需广告归因') : (app.launchAttribution || '—')
+        )
+      )
+    ),
+
+    // 栏2: 新增染色 (40%)
+    React.createElement('div', { className: 'expand-col' },
+      React.createElement('div', { className: 'expand-col-title' }, '新增染色'),
+      isNone
+        ? grayText('无需广告归因染色')
+        : hasColoring
+          ? coloringList.map((c, i) =>
+              React.createElement('div', { key: i, className: 'info-item' },
+                React.createElement('div', { className: 'info-label' }, c.dimension),
+                React.createElement('div', { className: 'info-value' }, c.method)
+              )
+            )
+          : emptyTip
+    ),
+
+    // 栏3: 推广/回传渠道 (40%)
+    React.createElement('div', { className: 'expand-col' },
+      React.createElement('div', { className: 'expand-col-title' }, '推广/回传渠道'),
+      !isNone && !app.noCallback && app.callbackModel && React.createElement('div', { className: 'info-item' },
+        React.createElement('div', { className: 'info-label' }, '回传新增口径'),
+        React.createElement('div', { className: 'info-value' }, app.callbackModel)
+      ),
+      (isNone || app.noCallback)
+        ? noCallbackTip
+        : hasChannels
+        ? app.channelConfigs.map((cc, i) => {
+            const code = CHANNEL_CODE_MAP[cc.channel] || cc.code || '';
+            return React.createElement('div', { key: i, className: 'expand-ch-item' },
+              React.createElement('div', { className: 'expand-ch-name' },
+                cc.channel,
+                code && React.createElement('span', { style: { color: 'rgba(0,0,0,0.45)', fontWeight: 400, marginLeft: 4, fontSize: 12 } }, `(${code})`)
+              ),
+              React.createElement('div', { className: 'expand-ch-meta' },
+                React.createElement('span', null,
+                  React.createElement('span', { className: 'lbl' }, '回传：'),
+                  React.createElement(Tag, { color: cc.callbackMethod === 'API回传' ? 'blue' : 'orange', style: tagStyle }, cc.callbackMethod)
+                ),
+                cc.callbackMethod === 'API回传' && cc.callbackScript && React.createElement('span', null,
+                  React.createElement('span', { className: 'lbl' }, '脚本：'), cc.callbackScript
+                ),
+                React.createElement('span', null, React.createElement('span', { className: 'lbl' }, '激活：'), cc.activationTiming),
+                React.createElement('span', null, React.createElement('span', { className: 'lbl' }, '注册：'), cc.registrationTiming),
+                React.createElement('span', null, React.createElement('span', { className: 'lbl' }, '付费：'), cc.paymentTiming)
+              )
+            );
+          })
+        : emptyTip
+    )
+  );
+}
+
+// ===================== Edit/Add Modal =====================
+function AppFormModal({ open, mode, form, setForm, onClose, onSubmit }) {
+  if (!open) return null;
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+  const updateColoring = (dim, method) => setForm(prev => ({
+    ...prev,
+    coloringMethods: prev.coloringMethods.map(c => c.dimension === dim ? { ...c, method } : c),
+  }));
+  const addChannel = () => setForm(prev => ({
+    ...prev,
+    channelConfigs: [...prev.channelConfigs, {
+      id: 'cc_' + Date.now(),
+      channel: MAIN_CHANNEL_OPTIONS[0],
+      callbackModel: CALLBACK_MODEL_OPTIONS[0],
+      callbackMethod: 'SDK回传',
+      activationTiming: 'sdk回传',
+      registrationTiming: 'sdk回传',
+      paymentTiming: 'sdk回传',
+    }],
+  }));
+  const removeChannel = (id) => setForm(prev => ({
+    ...prev, channelConfigs: prev.channelConfigs.filter(c => c.id !== id),
+  }));
+  const updateChannel = (id, key, val) => setForm(prev => ({
+    ...prev,
+    channelConfigs: prev.channelConfigs.map(c => {
+      if (c.id !== id) return c;
+      if (key === 'callbackMethod') {
+        return {
+          ...c, callbackMethod: val,
+          callbackScript: val === 'SDK回传' ? '' : (c.callbackScript || ''),
+          activationTiming: (ACTIVATION_TIMING[val] || ['sdk回传'])[0],
+          registrationTiming: (REGISTRATION_TIMING[val] || ['sdk回传'])[0],
+          paymentTiming: (PAYMENT_TIMING[val] || ['sdk回传'])[0],
+        };
+      }
+      return { ...c, [key]: val };
+    }),
+  }));
+
+  useEffect(() => {
+    const auto = buildPkgDefault(form.appId, form.mainChannel);
+    setForm(prev => ({ ...prev, pkgDefault: auto }));
+  }, [form.appId, form.mainChannel]);
+
+  const SECTIONS = [
+    { key: 'basic', label: '基础信息' },
+    { key: 'match', label: '点击匹配' },
+    { key: 'coloring', label: '归因染色' },
+    { key: 'callback', label: '渠道回传' },
+  ];
+  const sectionFilled = [
+    !!(form.appId && form.appName && form.game && form.platform && form.system && form.publishSdk && form.mainChannel && form.subpackageMethod && form.packageName),
+    !!(form.attributionDimensions.length && form.activationAttribution && form.launchAttribution),
+    form.coloringMethods.some(c => c.method),
+    !!(form.callbackModel),
+  ];
+  const filledCount = sectionFilled.filter(Boolean).length;
+
+  const systemOpts = form.platform === 'APP' ? SYSTEM_OPTIONS_APP
+    : form.platform === '微信小游戏' ? SYSTEM_OPTIONS_WECHAT
+    : ALL_SYSTEM_OPTIONS;
+
+  return React.createElement('div', {
+    className: 'modal-overlay',
+    onClick: (e) => { if (e.target === e.currentTarget) onClose(); }
+  },
+    React.createElement('div', { className: 'modal-container' },
+
+      // Header
+      React.createElement('div', {
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', height: 52, borderBottom: '1px solid #ebeef5', flexShrink: 0 }
+      },
+        React.createElement('span', { style: { fontSize: 15, fontWeight: 600, color: 'rgba(0,0,0,0.88)' } },
+          mode === 'add' ? '新增应用' : '编辑应用'
+        ),
+        React.createElement(Button, { type: 'text', icon: React.createElement(CloseOutlined), onClick: onClose })
+      ),
+
+      // Progress bar
+      React.createElement('div', {
+        style: { display: 'flex', alignItems: 'center', padding: '0 28px', height: 52, borderBottom: '1px solid #f0f1f3', background: '#fafbfc', flexShrink: 0, gap: 0 }
+      },
+        SECTIONS.map((sec, i) => {
+          const done = sectionFilled[i];
+          return React.createElement('div', { key: sec.key, style: { flex: 1, display: 'flex', alignItems: 'center' } },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+              React.createElement('div', {
+                style: {
+                  width: 22, height: 22, borderRadius: '50%', fontSize: 11, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: done ? '#1677ff' : '#e5e6eb', color: done ? '#fff' : '#86909c',
+                  transition: 'all 0.3s',
+                }
+              }, done ? React.createElement(CheckOutlined, { style: { fontSize: 12 } }) : i + 1),
+              React.createElement('span', {
+                style: { fontSize: 13, color: done ? 'rgba(0,0,0,0.88)' : 'rgba(0,0,0,0.45)', fontWeight: done ? 500 : 400, whiteSpace: 'nowrap' }
+              }, sec.label)
+            ),
+            i < SECTIONS.length - 1 && React.createElement('div', {
+              style: { flex: 1, height: 1, background: done ? '#1677ff' : '#e5e6eb', margin: '0 16px', minWidth: 24, transition: 'background 0.3s' }
+            })
+          );
+        }),
+        React.createElement('span', { style: { fontSize: 12, color: 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap', marginLeft: 8 } },
+          `${filledCount}/${SECTIONS.length}`
+        )
+      ),
+
+      // Scrollable body
+      React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '20px 28px 28px', background: '#f5f7fa' } },
+
+        // ① 基础信息
+        React.createElement('div', { style: { background: '#fff', padding: '20px 24px 24px', marginBottom: 14, border: '1px solid #ebeef5', borderRadius: 8 } },
+          React.createElement(SectionHeader, null, '基础信息'),
+          React.createElement(Row, { gutter: [20, 16] },
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '应用 ID'),
+              React.createElement(Input, { size: 'middle', value: form.appId, onChange: e => set('appId', e.target.value), placeholder: '请输入应用 ID' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '应用名称'),
+              React.createElement(Input, { size: 'middle', value: form.appName, onChange: e => set('appName', e.target.value), placeholder: '请输入应用名称' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '游戏'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.game || undefined, onChange: v => set('game', v), options: GAME_OPTIONS, placeholder: '请选择游戏' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '平台'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.platform || undefined, onChange: v => {
+                if (v === '微信小游戏') { setForm(prev => ({ ...prev, platform: v, system: '/' })); }
+                else { setForm(prev => ({ ...prev, platform: v, system: SYSTEM_OPTIONS_APP.includes(prev.system) ? prev.system : '' })); }
+              }, options: PLATFORM_OPTIONS, placeholder: '请选择平台' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '系统'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.system || undefined, onChange: v => set('system', v),
+                disabled: form.platform === '微信小游戏',
+                options: systemOpts.map(s => ({ value: s, label: s })), placeholder: '请选择系统' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '发行 SDK'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.publishSdk || undefined, onChange: v => set('publishSdk', v),
+                options: PUBLISH_SDK_OPTIONS.map(s => ({ value: s, label: s })), placeholder: '请选择' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '推广主渠道'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.mainChannel || undefined, onChange: v => set('mainChannel', v),
+                options: MAIN_CHANNEL_OPTIONS.map(s => ({ value: s, label: s })), placeholder: '请选择渠道' })
+            ),
+            React.createElement(Col, { span: 6 },
+              React.createElement(FieldLabel, { required: true }, '分包方式'),
+              React.createElement(Select, { style: { width: '100%' }, value: form.subpackageMethod || undefined, onChange: v => set('subpackageMethod', v),
+                options: SUBPACKAGE_OPTIONS.map(s => ({ value: s, label: s })), placeholder: '请选择' })
+            ),
+            React.createElement(Col, { span: 12 },
+              React.createElement(FieldLabel, { required: true }, '英文包名'),
+              React.createElement(Input, { value: form.packageName, onChange: e => set('packageName', e.target.value), placeholder: 'com.example.game' })
+            ),
+          )
+        ),
+
+        // ② 点击匹配
+        React.createElement('div', { style: { background: '#fff', padding: '20px 24px 24px', marginBottom: 14, border: '1px solid #ebeef5', borderRadius: 8 } },
+          React.createElement(SectionHeader, null, '点击匹配'),
+          (() => {
+            const isNone = form.attributionDimensions.includes('无');
+            const preset = getDimensionPreset(form.attributionDimensions);
+            const activationOpts = ACTIVATION_ATTRIBUTION_OPTIONS.filter(s => isNone ? s === '无需广告归因' : s !== '无需广告归因');
+            const launchOpts = LAUNCH_ATTRIBUTION_OPTIONS.filter(s => isNone ? s === '无需广告归因' : s !== '无需广告归因');
+            return React.createElement(React.Fragment, null,
+              // 归因维度 分段控件
+              React.createElement('div', { style: { marginBottom: 16 } },
+                React.createElement(FieldLabel, { required: true }, '归因维度'),
+                React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' } },
+                  // 分段控件容器（白底带边框，类 SDK/API 回传风格）
+                  React.createElement('div', {
+                    style: {
+                      display: 'inline-flex', flexShrink: 0,
+                      border: '1px solid #d9d9d9', borderRadius: 6, overflow: 'hidden',
+                    }
+                  },
+                    DIMENSION_PRESETS.map((p, idx) =>
+                      React.createElement('button', {
+                        key: p.value,
+                        type: 'button',
+                        onClick: () => {
+                          if (p.value === 'none') {
+                            setForm(prev => ({
+                              ...prev,
+                              attributionDimensions: ['无'],
+                              activationAttribution: '无需广告归因',
+                              launchAttribution: '无需广告归因',
+                              coloringMethods: prev.coloringMethods.map(c => ({ ...c, method: '无需广告归因染色' })),
+                              noCallback: true,
+                              savedChannelConfigs: prev.noCallback ? (prev.savedChannelConfigs || []) : prev.channelConfigs,
+                              channelConfigs: [],
+                            }));
+                          } else if (p.value !== 'custom') {
+                            setForm(prev => ({
+                              ...prev,
+                              attributionDimensions: p.dims,
+                              activationAttribution: prev.activationAttribution === '无需广告归因' ? '' : prev.activationAttribution,
+                              launchAttribution: prev.launchAttribution === '无需广告归因' ? '' : prev.launchAttribution,
+                              coloringMethods: prev.coloringMethods.map(c => c.method === '无需广告归因染色' ? { ...c, method: '' } : c),
+                              noCallback: false,
+                              channelConfigs: (prev.savedChannelConfigs || []).length > 0 ? prev.savedChannelConfigs : prev.channelConfigs,
+                              savedChannelConfigs: [],
+                            }));
+                          } else {
+                            setForm(prev => ({
+                              ...prev,
+                              attributionDimensions: [],
+                              activationAttribution: prev.activationAttribution === '无需广告归因' ? '' : prev.activationAttribution,
+                              launchAttribution: prev.launchAttribution === '无需广告归因' ? '' : prev.launchAttribution,
+                              coloringMethods: prev.coloringMethods.map(c => c.method === '无需广告归因染色' ? { ...c, method: '' } : c),
+                              noCallback: false,
+                              channelConfigs: (prev.savedChannelConfigs || []).length > 0 ? prev.savedChannelConfigs : prev.channelConfigs,
+                              savedChannelConfigs: [],
+                            }));
+                          }
+                        },
+                        style: {
+                          padding: '4px 14px', fontSize: 13, cursor: 'pointer',
+                          outline: 'none', fontFamily: 'inherit', lineHeight: '24px',
+                          borderLeft: idx === 0 ? 'none' : '1px solid #d9d9d9',
+                          borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+                          background: preset === p.value ? '#1677ff' : '#fff',
+                          color: preset === p.value ? '#fff' : 'rgba(0,0,0,0.88)',
+                          fontWeight: preset === p.value ? 500 : 400,
+                          transition: 'background 0.15s, color 0.15s',
+                          whiteSpace: 'nowrap',
+                        }
+                      }, p.label)
+                    )
+                  ),
+                  // 自定义多选（右侧内联）
+                  preset === 'custom' && React.createElement(Select, {
+                    mode: 'multiple',
+                    style: { minWidth: 220 },
+                    value: form.attributionDimensions,
+                    onChange: v => set('attributionDimensions', v.filter(x => x !== '无')),
+                    options: DIMENSION_CUSTOM_OPTIONS.map(s => ({ value: s, label: s })),
+                    placeholder: '请选择（可多选）',
+                    size: 'middle',
+                  })
+                )
+              ),
+              // 激活归因 & 启动归因
+              React.createElement(Row, { gutter: [20, 16] },
+                React.createElement(Col, { span: 8 },
+                  React.createElement(FieldLabel, { required: true }, '激活归因方式'),
+                  React.createElement(Select, {
+                    style: { width: '100%' },
+                    value: form.activationAttribution || undefined,
+                    disabled: isNone,
+                    onChange: v => set('activationAttribution', v),
+                    options: activationOpts.map(s => ({ value: s, label: s })),
+                    placeholder: '请选择',
+                  })
+                ),
+                React.createElement(Col, { span: 8 },
+                  React.createElement(FieldLabel, { required: true }, '启动归因方式'),
+                  React.createElement(Select, {
+                    style: { width: '100%' },
+                    value: form.launchAttribution || undefined,
+                    disabled: isNone,
+                    onChange: v => set('launchAttribution', v),
+                    options: launchOpts.map(s => ({ value: s, label: s })),
+                    placeholder: '请选择',
+                  })
+                ),
+              )
+            );
+          })()
+        ),
+
+        // ③ 归因染色
+        React.createElement('div', { style: { background: '#fff', padding: '20px 24px 24px', marginBottom: 14, border: '1px solid #ebeef5', borderRadius: 8 } },
+          React.createElement(SectionHeader, null, '归因染色'),
+          React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
+            (() => {
+              const isNone = form.attributionDimensions.includes('无');
+              const coloringOpts = COLORING_METHOD_OPTIONS.filter(s => isNone ? s === '无需广告归因染色' : s !== '无需广告归因染色');
+              return COLORING_DIMENSIONS.map(dim =>
+                React.createElement('div', { key: dim, style: { display: 'flex', alignItems: 'center', gap: 16 } },
+                  React.createElement('span', { className: 'dim-tag' }, dim),
+                  React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' } }, '新增染色方式'),
+                  React.createElement('div', { style: { flex: 1, maxWidth: 520 } },
+                    React.createElement(Select, {
+                      style: { width: '100%' },
+                      value: (form.coloringMethods.find(c => c.dimension === dim) || {}).method || undefined,
+                      disabled: isNone,
+                      onChange: v => updateColoring(dim, v),
+                      options: coloringOpts.map(s => ({ value: s, label: s })),
+                      placeholder: '请选择',
+                    })
+                  )
+                )
+              );
+            })()
+          )
+        ),
+
+        // ④ 渠道回传
+        React.createElement('div', { style: { background: '#fff', padding: '20px 24px 24px', border: '1px solid #ebeef5', borderRadius: 8 } },
+          // 标题行：左侧标题，右侧"无需渠道回传"开关
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 } },
+            React.createElement(SectionHeader, { note: '（支持回传的推广渠道）' }, '渠道回传'),
+            (() => {
+              const isNone = form.attributionDimensions.includes('无');
+              return React.createElement(antd.Switch, {
+                size: 'small',
+                checked: !form.noCallback,   // ON = 渠道回传开启
+                disabled: isNone,
+                onChange: v => setForm(prev => ({
+                  ...prev,
+                  noCallback: !v,            // 关闭开关 → noCallback=true
+                  channelConfigs: v
+                    ? ((prev.savedChannelConfigs || []).length > 0 ? prev.savedChannelConfigs : prev.channelConfigs)
+                    : [],
+                  savedChannelConfigs: v ? [] : (prev.channelConfigs || []),
+                })),
+              });
+            })()
+          ),
+
+          // 无需回传时显示提示
+          form.noCallback
+            ? React.createElement('div', {
+                style: { border: '1px dashed #dcdfe6', borderRadius: 6, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: 'rgba(0,0,0,0.45)', gap: 6 }
+              }, '已设置为无需渠道回传')
+            : React.createElement(React.Fragment, null,
+                // 口径行 + 添加渠道按钮同行
+                React.createElement('div', { style: { display: 'flex', alignItems: 'flex-end', gap: 16, marginBottom: 16 } },
+                  React.createElement('div', { style: { width: 220 } },
+                    React.createElement(FieldLabel, { required: true }, '回传新增模型口径'),
+                    React.createElement(Select, { style: { width: '100%' }, value: form.callbackModel || undefined, onChange: v => set('callbackModel', v),
+                      options: CALLBACK_MODEL_OPTIONS.map(s => ({ value: s, label: s })), placeholder: '请选择' })
+                  ),
+                  React.createElement(Button, {
+                    type: 'dashed', icon: React.createElement(PlusOutlined), onClick: addChannel,
+                    style: { color: '#1677ff', borderColor: '#91caff', flexShrink: 0 }
+                  }, '添加渠道')
+                ),
+
+                form.channelConfigs.length === 0
+            ? React.createElement('div', {
+                style: { border: '1px dashed #dcdfe6', borderRadius: 6, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: 'rgba(0,0,0,0.25)' }
+              }, '暂无配置，点击「添加渠道」')
+            : React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
+                form.channelConfigs.map((cc, idx) => {
+                  const activationOpts = ACTIVATION_TIMING[cc.callbackMethod] || ACTIVATION_TIMING['SDK回传'];
+                  const registrationOpts = REGISTRATION_TIMING[cc.callbackMethod] || REGISTRATION_TIMING['SDK回传'];
+                  const paymentOpts = PAYMENT_TIMING[cc.callbackMethod] || PAYMENT_TIMING['SDK回传'];
+                  const safeVal = (opts, cur) => opts.includes(cur) ? cur : opts[0];
+                  return React.createElement('div', { key: cc.id, className: 'channel-card' },
+                    React.createElement('div', { className: 'channel-card-header' },
+                      React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.65)', fontWeight: 500 } }, `渠道 ${idx + 1}`),
+                      React.createElement(Button, {
+                        type: 'text', danger: true, size: 'small',
+                        icon: React.createElement(DeleteOutlined),
+                        onClick: () => removeChannel(cc.id),
+                      }, '删除')
+                    ),
+                    React.createElement('div', { style: { padding: '14px 16px 16px', background: '#fafafa' } },
+                      React.createElement(Row, { gutter: [16, 12] },
+                        React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, null, '推广渠道'),
+                          React.createElement(Select, { style: { width: '100%' }, value: cc.channel, onChange: v => updateChannel(cc.id, 'channel', v),
+                            options: MAIN_CHANNEL_OPTIONS.map(s => ({ value: s, label: s })) })
+                        ),
+                        React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, null, '回传方式'),
+                          React.createElement(Radio.Group, {
+                            value: cc.callbackMethod,
+                            onChange: e => updateChannel(cc.id, 'callbackMethod', e.target.value),
+                            optionType: 'button', buttonStyle: 'solid', size: 'middle',
+                            options: CALLBACK_METHOD_OPTIONS,
+                          })
+                        ),
+                        cc.callbackMethod === 'API回传' && React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, { required: true }, '回传脚本'),
+                          React.createElement(Select, {
+                            style: { width: '100%' },
+                            value: cc.callbackScript || undefined,
+                            onChange: v => updateChannel(cc.id, 'callbackScript', v),
+                            options: CALLBACK_SCRIPT_OPTIONS.map(s => ({ value: s, label: s })),
+                            placeholder: '请选择',
+                          })
+                        ),
+                      ),
+                      React.createElement(Row, { gutter: [16, 12], style: { marginTop: 12 } },
+                        React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, null, '激活事件时机'),
+                          React.createElement(Select, { style: { width: '100%' }, value: safeVal(activationOpts, cc.activationTiming),
+                            onChange: v => updateChannel(cc.id, 'activationTiming', v),
+                            options: activationOpts.map(s => ({ value: s, label: s })) })
+                        ),
+                        React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, null, '注册事件时机'),
+                          React.createElement(Select, { style: { width: '100%' }, value: safeVal(registrationOpts, cc.registrationTiming),
+                            onChange: v => updateChannel(cc.id, 'registrationTiming', v),
+                            options: registrationOpts.map(s => ({ value: s, label: s })) })
+                        ),
+                        React.createElement(Col, { span: 6 },
+                          React.createElement(FieldLabel, null, '付费事件时机'),
+                          React.createElement(Select, { style: { width: '100%' }, value: safeVal(paymentOpts, cc.paymentTiming),
+                            onChange: v => updateChannel(cc.id, 'paymentTiming', v),
+                            options: paymentOpts.map(s => ({ value: s, label: s })) })
+                        ),
+                      )
+                    )
+                  );
+                })
+              )
+              )  // end React.Fragment (noCallback false branch)
+        ),
+      ),
+
+      // Footer
+      React.createElement('div', {
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, padding: '0 28px', height: 52, borderTop: '1px solid #ebeef5', background: '#fff', flexShrink: 0 }
+      },
+        React.createElement(Button, { onClick: onClose }, '取消'),
+        React.createElement(Button, { type: 'primary', onClick: onSubmit }, '保存')
+      )
+    )
+  );
+}
+
+// ===================== Main App =====================
+function App() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('app-management');
+  const [apps, setApps] = useState(INITIAL_DATA);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [formMode, setFormMode] = useState('add');
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [nextId, setNextId] = useState(200);
+  const [expandedRows, setExpandedRows] = useState({});
+
+  // Filter state
+  const [fGame, setFGame] = useState([]);
+  const [fPlatform, setFPlatform] = useState([]);
+  const [fSystem, setFSystem] = useState([]);
+  const [fName, setFName] = useState('');
+  const [applied, setApplied] = useState({ game: [], platform: [], system: [], name: '' });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Tab: 应用管理 / 回传管理
+  const TABS = [
+    { key: 'app-management', label: '应用管理' },
+    { key: 'callback-management', label: '回传管理' },
+  ];
+
+  const filteredApps = apps.filter(app => {
+    if (applied.game.length && !applied.game.includes(app.game)) return false;
+    if (applied.platform.length && !applied.platform.includes(app.platform)) return false;
+    if (applied.system.length && !applied.system.includes(app.system)) return false;
+    if (applied.name && !app.appName.includes(applied.name) && !app.appId.includes(applied.name)) return false;
+    return true;
+  });
+
+  const handleQuery = () => { setApplied({ game: fGame, platform: fPlatform, system: fSystem, name: fName }); setCurrentPage(1); };
+  const handleReset = () => { setFGame([]); setFPlatform([]); setFSystem([]); setFName(''); setApplied({ game: [], platform: [], system: [], name: '' }); setCurrentPage(1); };
+
+  const pagedApps = filteredApps.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const openAdd = () => { setFormMode('add'); setEditId(null); setForm({ ...EMPTY_FORM }); setDrawerOpen(true); };
+  const openEdit = (app) => {
+    setFormMode('edit'); setEditId(app.id);
+    const { id, ...rest } = app;
+    const existing = rest.coloringMethods || [];
+    rest.coloringMethods = COLORING_DIMENSIONS.map(d => existing.find(c => c.dimension === d) || { dimension: d, method: '' });
+    if (!rest.savedChannelConfigs) rest.savedChannelConfigs = [];
+    if (rest.noCallback === undefined) rest.noCallback = false;
+    setForm({ ...rest }); setDrawerOpen(true);
+  };
+  const handleSubmit = () => {
+    if (formMode === 'add') {
+      setApps(p => [...p, { ...form, id: nextId }]);
+      setNextId(n => n + 1);
+      setDrawerOpen(false);
+    } else if (editId !== null) {
+      Modal.confirm({
+        title: '确认修订',
+        content: `是否确认修订「${form.appName}」的应用配置？`,
+        okText: '确认修订', cancelText: '取消',
+        onOk: () => {
+          setApps(p => p.map(a => a.id === editId ? { ...form, id: editId } : a));
+          setDrawerOpen(false);
+        },
+      });
+    }
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const allExpanded = pagedApps.length > 0 && pagedApps.every(app => expandedRows[app.id]);
+  const toggleExpandAll = () => {
+    if (allExpanded) {
+      setExpandedRows({});
+    } else {
+      const next = {};
+      pagedApps.forEach(app => { next[app.id] = true; });
+      setExpandedRows(next);
+    }
+  };
+
+  // Table columns definition using Ant Design Table
+  const columns = [
+    {
+      title: React.createElement(Tooltip, { title: allExpanded ? '收起全部' : '展开全部' },
+        React.createElement(Button, {
+          type: 'text', size: 'small',
+          icon: React.createElement(allExpanded ? DownOutlined : RightOutlined, { style: { fontSize: 11, color: '#1677ff' } }),
+          onClick: toggleExpandAll,
+          style: { width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+        })
+      ),
+      dataIndex: 'expand', key: 'expand', width: 40, fixed: 'left',
+      render: (_, record) => React.createElement(Button, {
+        type: 'text', size: 'small',
+        icon: React.createElement(expandedRows[record.id] ? DownOutlined : RightOutlined, { style: { fontSize: 10, color: '#1677ff' } }),
+        onClick: () => toggleExpand(record.id),
+        style: { width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+      }),
+    },
+    { title: '应用ID', dataIndex: 'appId', key: 'appId', width: 100, fixed: 'left' },
+    {
+      title: '应用名称', dataIndex: 'appName', key: 'appName', width: 140, fixed: 'left',
+      render: (text) => React.createElement('span', { style: { fontWeight: 500, color: 'rgba(0,0,0,0.88)' } }, text),
+    },
+    { title: '游戏', dataIndex: 'game', key: 'game', width: 90 },
+    { title: '平台', dataIndex: 'platform', key: 'platform', width: 90 },
+    { title: '系统', dataIndex: 'system', key: 'system', width: 70 },
+    { title: '发行SDK', dataIndex: 'publishSdk', key: 'publishSdk', width: 90 },
+    { title: '分包方式', dataIndex: 'subpackageMethod', key: 'subpackageMethod', width: 100 },
+    {
+      title: '英文包名', dataIndex: 'packageName', key: 'packageName', width: 180,
+      ellipsis: { showTitle: false },
+      render: (text) => React.createElement(Tooltip, { title: text, placement: 'topLeft' }, text),
+    },
+    { title: '主线包推广渠道', dataIndex: 'mainChannel', key: 'mainChannel', width: 120 },
+    {
+      title: '主线包 pkg_default', dataIndex: 'pkgDefault', key: 'pkgDefault', width: 190,
+      ellipsis: { showTitle: false },
+      render: (text) => React.createElement(Tooltip, { title: text, placement: 'topLeft' }, text),
+    },
+    {
+      title: '归因配置', key: 'attribution', width: 180,
+      render: (_, record) => {
+        const isNone = record.attributionDimensions && record.attributionDimensions.includes('无');
+        if (isNone) {
+          return React.createElement(Tag, { color: 'default', style: { margin: 0, fontSize: 12, lineHeight: '20px', padding: '0 6px', color: 'rgba(0,0,0,0.45)' } }, '无需广告归因');
+        }
+        return React.createElement('div', { style: { display: 'flex', gap: 3, flexWrap: 'wrap' } },
+          (record.attributionDimensions || []).map((d, i) =>
+            React.createElement(Tag, {
+              key: i, color: 'default',
+              style: { margin: 0, fontSize: 12, lineHeight: '20px', padding: '0 6px' },
+            }, d)
+          )
+        );
+      },
+    },
+    {
+      title: '新增染色', key: 'coloring', width: 110, align: 'center',
+      render: (_, record) => {
+        const isNone = record.attributionDimensions && record.attributionDimensions.includes('无');
+        if (isNone) {
+          return React.createElement(Tag, { color: 'default', style: { margin: 0, color: 'rgba(0,0,0,0.45)', fontSize: 12 } }, '无需归因染色');
+        }
+        const configured = record.coloringMethods && record.coloringMethods.filter(c => c.method && c.method !== '无需广告归因染色').length > 0;
+        return configured
+          ? React.createElement(Tag, { color: 'success', style: { margin: 0, fontSize: 12 } }, '已配置')
+          : React.createElement(Tag, { color: 'default', style: { margin: 0, color: 'rgba(0,0,0,0.25)', fontSize: 12 } }, '未配置');
+      },
+    },
+    {
+      title: '推广/回传渠道', key: 'channels', width: 220,
+      render: (_, record) => {
+        const isNone = record.attributionDimensions && record.attributionDimensions.includes('无');
+        if (isNone || record.noCallback) {
+          return React.createElement(Tag, { color: 'default', style: { margin: 0, color: 'rgba(0,0,0,0.45)', fontSize: 12 } }, '无需渠道回传');
+        }
+        if (!record.channelConfigs || record.channelConfigs.length === 0) {
+          return React.createElement(Tag, { color: 'default', style: { margin: 0, color: 'rgba(0,0,0,0.25)', fontSize: 12 } }, '未配置');
+        }
+        const MAX_SHOW = 1;
+        const visible = record.channelConfigs.slice(0, MAX_SHOW);
+        const extra = record.channelConfigs.length - MAX_SHOW;
+        const lastVisible = visible[visible.length - 1];
+        const lastIsSDK = lastVisible ? lastVisible.callbackMethod === 'API回传' : false;
+        return React.createElement('div', { style: { display: 'flex', gap: 4, flexWrap: 'nowrap', alignItems: 'center', overflow: 'hidden' } },
+          ...visible.map((cc, i) => {
+            const code = CHANNEL_CODE_MAP[cc.channel] || cc.code || '';
+            const isSDK = cc.callbackMethod === 'SDK回传';
+            return React.createElement(Tag, {
+              key: i,
+              color: isSDK ? 'orange' : 'blue',
+              style: { margin: 0, fontSize: 12, lineHeight: '20px', padding: '0 6px' },
+            }, `${cc.channel}(${code})`);
+          }),
+          extra > 0 ? React.createElement(Tag, {
+            key: 'extra',
+            color: lastIsSDK ? 'blue' : 'orange',
+            style: { margin: 0, fontSize: 12, lineHeight: '20px', padding: '0 6px' },
+          }, `+${extra}`) : null
+        );
+      },
+    },
+    {
+      title: '操作', key: 'action', width: 120, fixed: 'right', align: 'center',
+      render: (_, record) => React.createElement(Space, { size: 0 },
+        React.createElement(Button, { type: 'link', size: 'small', onClick: () => openEdit(record) }, '编辑'),
+        React.createElement(Button, { type: 'link', size: 'small', danger: true, onClick: () => {
+          Modal.confirm({
+            title: '高危操作确认',
+            content: `是否确认删除「${record.appName}」的应用配置？删除后不可恢复。`,
+            okText: '确认删除', okType: 'danger', cancelText: '取消',
+            onOk: () => setApps(p => p.filter(a => a.id !== record.id)),
+          });
+        }}, '删除')
+      ),
+    },
+  ];
+
+  return React.createElement(ConfigProvider, {
+    theme: {
+      token: { colorPrimary: '#1677ff', borderRadius: 6, fontSize: 13, colorText: 'rgba(0,0,0,0.88)', colorTextSecondary: 'rgba(0,0,0,0.65)' },
+      components: {
+        Table: {
+          headerBg: '#fafafa', headerColor: 'rgba(0,0,0,0.65)', headerFontSize: 13, headerFontWeight: 600,
+          fontSize: 13, cellPaddingBlock: 12, cellPaddingInline: 12,
+          rowHoverBg: '#f5f7fa',
+        },
+      },
+    },
+  },
+    React.createElement(Layout, { style: { minHeight: '100vh' } },
+      // Header
+      React.createElement(Header, {
+        style: { background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', height: 48, lineHeight: '48px', borderBottom: '1px solid #f0f0f0' }
+      },
+        React.createElement('div', { className: 'header-logo' },
+          React.createElement('svg', { width: 28, height: 28, viewBox: '0 0 100 100', style: { marginRight: 4 } },
+            React.createElement('defs', null,
+              React.createElement('linearGradient', { id: 'whaleGrad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' },
+                React.createElement('stop', { offset: '0%', style: { stopColor: '#36b3ff', stopOpacity: 1 } }),
+                React.createElement('stop', { offset: '100%', style: { stopColor: '#1677ff', stopOpacity: 1 } })
+              )
+            ),
+            React.createElement('circle', { cx: 50, cy: 50, r: 45, fill: 'url(#whaleGrad)' }),
+            React.createElement('path', { d: 'M30 55 Q35 35, 55 30 Q70 28, 75 40 Q78 50, 70 58 Q60 65, 45 62 Q35 60, 30 55Z', fill: 'white', opacity: 0.9 }),
+            React.createElement('path', { d: 'M55 30 Q48 25, 40 28 Q35 30, 38 38', fill: 'none', stroke: 'white', strokeWidth: 3, opacity: 0.7 }),
+            React.createElement('circle', { cx: 60, cy: 45, r: 3, fill: 'url(#whaleGrad)' })
+          ),
+          React.createElement('span', null, '鲸鱼座')
+        ),
+        React.createElement(Menu, {
+          mode: 'horizontal', selectedKeys: ['attribution'], items: topMenuItems,
+          onClick: handleNavClick,
+          style: { flex: 1, minWidth: 0, background: 'transparent', height: 48, lineHeight: '48px', borderBottom: 'none' }
+        }),
+        React.createElement('div', { className: 'header-right' },
+          React.createElement('div', { className: 'env-block' },
+            React.createElement('span', { className: 'env-name' }, '产品原型'),
+            React.createElement('span', { className: 'env-version' }, 'main · 0.0.9-v2')
+          ),
+          React.createElement('span', { className: 'user-name' }, '路遥')
+        )
+      ),
+
+      // Body
+      React.createElement(Layout, null,
+        // Sider
+        React.createElement(Sider, {
+          width: 180, collapsedWidth: 56, collapsible: true, collapsed: collapsed,
+          onCollapse: setCollapsed, theme: 'light',
+          style: { background: '#fff', borderRight: '1px solid #f0f0f0' }
+        },
+          React.createElement(Menu, {
+            theme: 'light', mode: 'inline',
+            selectedKeys: ['app-management'],
+            items: siderMenuItems,
+            style: { borderRight: 0 }
+          })
+        ),
+
+        // Content
+        React.createElement(Layout, null,
+          // Tabs (应用管理 / 回传管理)
+          React.createElement('div', {
+            style: { display: 'flex', alignItems: 'flex-end', background: '#fff', borderBottom: '1px solid #f0f0f0', paddingLeft: 20, height: 44, flexShrink: 0 }
+          },
+            TABS.map(tab => {
+              const active = activeTab === tab.key;
+              return React.createElement('div', {
+                key: tab.key,
+                onClick: () => setActiveTab(tab.key),
+                style: {
+                  position: 'relative', display: 'flex', alignItems: 'center', height: '100%',
+                  padding: '0 16px', fontSize: 13, cursor: 'pointer',
+                  fontWeight: active ? 500 : 400,
+                  color: active ? '#1677ff' : 'rgba(0,0,0,0.65)',
+                }
+              },
+                tab.label,
+                active && React.createElement('span', {
+                  style: { position: 'absolute', bottom: 0, left: 16, right: 16, height: 2, background: '#1677ff', borderRadius: '1px 1px 0 0' }
+                })
+              );
+            })
+          ),
+
+          // Content area
+          React.createElement(Content, {
+            style: { background: '#f5f5f5', minHeight: 'calc(100vh - 92px)', display: 'flex', flexDirection: 'column' }
+          },
+            activeTab === 'app-management' ? React.createElement(React.Fragment, null,
+
+              // Filter section
+              React.createElement('div', {
+                style: { background: '#fff', padding: '12px 20px', borderBottom: '1px solid #e5e6eb', flexShrink: 0 }
+              },
+                React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' } },
+                  React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                    React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' } }, '游戏'),
+                    React.createElement(Select, { mode: 'multiple', style: { minWidth: 160 }, value: fGame, onChange: setFGame, placeholder: '全部', allowClear: true, maxTagCount: 1,
+                      options: GAME_OPTIONS })
+                  ),
+                  React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                    React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' } }, '平台'),
+                    React.createElement(Select, { mode: 'multiple', style: { minWidth: 160 }, value: fPlatform, onChange: setFPlatform, placeholder: '全部', allowClear: true, maxTagCount: 1,
+                      options: PLATFORM_OPTIONS })
+                  ),
+                  React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                    React.createElement('span', { style: { fontSize: 13, color: 'rgba(0,0,0,0.45)', whiteSpace: 'nowrap' } }, '系统'),
+                    React.createElement(Select, { mode: 'multiple', style: { minWidth: 160 }, value: fSystem, onChange: setFSystem, placeholder: '全部', allowClear: true, maxTagCount: 1,
+                      options: ALL_SYSTEM_OPTIONS.map(s => ({ value: s, label: s })) })
+                  ),
+                  React.createElement(Input.Search, {
+                    value: fName, onChange: e => setFName(e.target.value),
+                    onSearch: handleQuery,
+                    placeholder: '请输入名称、ID、包名', style: { width: 200 },
+                    allowClear: true,
+                  }),
+                  React.createElement(Button, { type: 'primary', icon: React.createElement(SearchOutlined), onClick: handleQuery }, '查询'),
+                  React.createElement(Button, { icon: React.createElement(ReloadOutlined), onClick: handleReset }, '重置'),
+                  React.createElement('div', { style: { flex: 1, display: 'flex', justifyContent: 'flex-end' } },
+                    React.createElement(Button, { type: 'primary', icon: React.createElement(PlusOutlined), onClick: openAdd }, '新增应用')
+                  ),
+                )
+              ),
+
+              // Table section using Ant Design Table
+              React.createElement('div', { style: { flex: 1, padding: '12px 20px', overflow: 'auto' } },
+                React.createElement(Table, {
+                  columns: columns,
+                  dataSource: pagedApps.map(app => ({ ...app, key: app.id })),
+                  pagination: {
+                    current: currentPage, pageSize: pageSize, total: filteredApps.length,
+                    showSizeChanger: true, showTotal: total => `共 ${total} 条`,
+                    pageSizeOptions: [20, 50, 100],
+                    onChange: (page, size) => { setCurrentPage(page); setPageSize(size); },
+                    size: 'small',
+                  },
+                  scroll: { x: 1800 },
+                  size: 'middle',
+                  bordered: false,
+                  sticky: true,
+                  rowClassName: (_, index) => index % 2 === 0 ? 'row-white' : 'row-stripe',
+                  expandable: {
+                    expandedRowKeys: Object.keys(expandedRows).filter(k => expandedRows[k]).map(Number),
+                    expandedRowRender: (record) => React.createElement(ExpandRowDetail, { app: record }),
+                    expandedRowClassName: (_, index) => index % 2 === 0 ? 'row-white' : 'row-stripe',
+                    expandIcon: () => null,
+                    expandRowByClick: false,
+                  },
+                  style: { background: '#fff', borderRadius: 6 },
+                })
+              )
+            )
+            : React.createElement('div', {
+                style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,0.25)', fontSize: 13 }
+              }, '回传管理页面开发中')
+          )
+        )
+      ),
+
+      // Modal
+      React.createElement(AppFormModal, {
+        open: drawerOpen, mode: formMode, form: form, setForm: setForm,
+        onClose: () => setDrawerOpen(false), onSubmit: handleSubmit,
+      })
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
